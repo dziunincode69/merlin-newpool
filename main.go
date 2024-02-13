@@ -37,7 +37,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	start := logtkn.PoolIds
+	start := logtkn.PoolIds + 1
 	count := 0
 	for {
 		res, err := poolinit.GetPoolMetas(big.NewInt(int64(start)))
