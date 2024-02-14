@@ -24,6 +24,7 @@ func ConnectMongo() {
 		fmt.Println("Fatal err MongoDB", err)
 	}
 }
+
 func ConnectRpc(rpcUrl string) {
 	rpcClient, err = ethclient.Dial(rpcUrl)
 	if err != nil {
