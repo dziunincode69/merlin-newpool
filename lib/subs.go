@@ -7,13 +7,11 @@ import (
 	"merlin-newpool/client"
 	"merlin-newpool/utils"
 	"strconv"
-	"sync"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/robfig/cron"
 )
 
 func EventSubscribe(logchan chan types.Log) []ethereum.Subscription {
@@ -35,27 +33,25 @@ func EventSubscribe(logchan chan types.Log) []ethereum.Subscription {
 	return subs
 }
 func Subscribe(poolinit *Caller) bool {
-	var wg sync.WaitGroup
-	cronjob := cron.New()
 	logchan := make(chan types.Log)
 	triggerchan := make(chan bool)
-	subs := EventSubscribe(logchan)
-	go func() {
-		cronjob.AddFunc("@every 10s", func() {
-			log.Println("Restarting connection...")
-			for _, v := range subs {
-				wg.Add(1)
-				go func(s ethereum.Subscription) {
-					defer wg.Done()
-					s.Unsubscribe()
-				}(v)
-			}
-			wg.Wait()
-			triggerchan <- true
-			cronjob.Stop()
-		})
-		cronjob.Start()
-	}()
+	EventSubscribe(logchan)
+	// go func() {
+	// 	cronjob.AddFunc("@every 10m", func() {
+	// 		log.Println("Restarting connection...")
+	// 		for _, v := range subs {
+	// 			wg.Add(1)
+	// 			go func(s ethereum.Subscription) {
+	// 				defer wg.Done()
+	// 				s.Unsubscribe()
+	// 			}(v)
+	// 		}
+	// 		wg.Wait()
+	// 		triggerchan <- true
+	// 		cronjob.Stop()
+	// 	})
+	// 	cronjob.Start()
+	// }()
 
 	go func(logchan chan types.Log) {
 		for vLog := range logchan {
@@ -92,8 +88,8 @@ func Subscribe(poolinit *Caller) bool {
 
 				}
 				msg := "*🔮 MERLIN NEW CREATE POOL 🔮*\n\n" +
-					"*Token Name:* `" + utils.EscapeMarkdownV2(ercres.Name) + "`\n" +
-					"*Token Symbol:* `" + utils.EscapeMarkdownV2(ercres.Symbol) + "`\n" +
+					"*Token Name:* " + utils.EscapeMarkdownV2(ercres.Name) + "\n" +
+					"*Token Symbol:* " + utils.EscapeMarkdownV2(ercres.Symbol) + "\n" +
 					"*Total Supply:* " + utils.EscapeMarkdownV2(ercres.TotalSupply.String()) + "\n" +
 					"*Decimals:* " + utils.EscapeMarkdownV2(strconv.Itoa(int(ercres.Dec))) + "\n\n" +
 					"*Token Address:* `" + utils.EscapeMarkdownV2(resultdecode.TokenX.Hex()) + "`\n" +
@@ -116,25 +112,26 @@ func Subscribe(poolinit *Caller) bool {
 					log.Println("Found New Token", vLog.TxHash.String(), "Token Address: ", common.HexToAddress(trx.ContractAddress.String()).String())
 					newerc, err := InitERC(trx.ContractAddress)
 					if err != nil {
-						log.Fatal(err)
-
+						triggerchan <- false
+					} else {
+						ercres, err := newerc.GetTokenDetail()
+						if err != nil {
+							triggerchan <- false
+						} else {
+							msg := "*🔮 MERLIN NEW TOKEN CREATED 🔮*\n\n" +
+								"*Token Name:* " + utils.EscapeMarkdownV2(ercres.Name) + "\n" +
+								"*Token Symbol:* " + utils.EscapeMarkdownV2(ercres.Symbol) + "\n" +
+								"*Token Address:* `" + utils.EscapeMarkdownV2(trx.ContractAddress.Hex()) + "`\n" +
+								"*Total Supply:* " + utils.EscapeMarkdownV2(ercres.TotalSupply.String()) + "\n" +
+								"*Decimals:* " + utils.EscapeMarkdownV2(strconv.Itoa(int(ercres.Dec))) + "\n" +
+								"*Owner:* `" + utils.EscapeMarkdownV2(ercres.Owner.Hex()) + "`\n\n" +
+								"[Token Address](https://scan.merlinchain.io/token/" + trx.ContractAddress.Hex() + ")  " +
+								"[Owner](https://scan.merlinchain.io/address/" + ercres.Owner.Hex() + ")  " +
+								"[TX HASH](https://scan.merlinchain.io/tx/" + vLog.TxHash.Hex() + ")  "
+							fmt.Println("TokenAddress: ", trx.ContractAddress.String(), "Name: ", ercres.Name, "Symbol: ", ercres.Symbol, "Owner: ", ercres.Owner.String())
+							SendLog(msg, "@merlinnewtoken")
+						}
 					}
-					ercres, err := newerc.GetTokenDetail()
-					if err != nil {
-						log.Fatal(err)
-					}
-					msg := "*🔮 MERLIN NEW TOKEN CREATED 🔮*\n\n" +
-						"*Token Name:* `" + utils.EscapeMarkdownV2(ercres.Name) + "`\n" +
-						"*Token Symbol:* `" + utils.EscapeMarkdownV2(ercres.Symbol) + "`\n" +
-						"*Token Address:* `" + utils.EscapeMarkdownV2(trx.ContractAddress.Hex()) + "`\n" +
-						"*Total Supply:* " + utils.EscapeMarkdownV2(ercres.TotalSupply.String()) + "\n" +
-						"*Decimals:* " + utils.EscapeMarkdownV2(strconv.Itoa(int(ercres.Dec))) + "\n" +
-						"*Owner:* `" + utils.EscapeMarkdownV2(ercres.Owner.Hex()) + "`\n\n" +
-						"[Token Address](https://scan.merlinchain.io/token/" + trx.ContractAddress.Hex() + ")  " +
-						"[Owner](https://scan.merlinchain.io/address/" + ercres.Owner.Hex() + ")  " +
-						"[TX HASH](https://scan.merlinchain.io/tx/" + vLog.TxHash.Hex() + ")  "
-					fmt.Println("TokenAddress: ", trx.ContractAddress.String(), "Name: ", ercres.Name, "Symbol: ", ercres.Symbol, "Owner: ", ercres.Owner.String())
-					SendLog(msg, "@merlinnewtoken")
 				}
 
 			}
