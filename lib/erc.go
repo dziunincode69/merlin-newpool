@@ -30,10 +30,10 @@ type CallerToken struct {
 func GetOwner(token string) string {
 	var getOwner string
 	req := request{token, "0x893d20e8"}
-	if err := client.RPCCUSTOM().Call(&getOwner, "eth_call", req, "latest"); err != nil {
-		if err = client.RPCCUSTOM().Call(&getOwner, "eth_call", request{token, "0xb4a99a4e"}, "latest"); err != nil {
-			if err = client.RPCCUSTOM().Call(&getOwner, "eth_call", request{token, "0x8da5cb5b"}, "latest"); err != nil {
-				return ""
+	if err := client.RPCCUSTOM().Call(&getOwner, "eth_call", req, "latest"); err != nil || getOwner == "0x0000000000000000000000000000000000000000" {
+		if err = client.RPCCUSTOM().Call(&getOwner, "eth_call", request{token, "0xb4a99a4e"}, "latest"); err != nil || getOwner == "0x0000000000000000000000000000000000000000" {
+			if err = client.RPCCUSTOM().Call(&getOwner, "eth_call", request{token, "0x8da5cb5b"}, "latest"); err != nil || getOwner == "0x0000000000000000000000000000000000000000" {
+				return "0x0000000000000000000000000000000000000000"
 			}
 		}
 	}

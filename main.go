@@ -16,6 +16,7 @@ func init() {
 //mongo merlin Saninkicker123
 
 func main() {
+	// lib.GetCreatePoolFromLogsByOwnerAddress("0xeA5C60B2ea157624B9D347dA0370a860cce7753d")
 	poolinit, err := lib.BindNewContract()
 	if err != nil {
 		log.Fatal(err)

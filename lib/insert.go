@@ -13,5 +13,12 @@ func InsertTknLog(tknAddress, name, symbol, Owner, poolAddress string, Fee, Pool
 	if err != nil {
 		log.Fatal(err)
 	}
+}
 
+func InsertNewTkn(tknAddress, name, symbol, Owner string) {
+	tkn := models.NewModelNewToken(tknAddress, name, symbol, Owner)
+	err := mgm.Coll(tkn).Create(tkn)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

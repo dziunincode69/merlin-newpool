@@ -29,7 +29,13 @@ func EventSubscribe(logchan chan types.Log) []ethereum.Subscription {
 	if err != nil {
 		log.Fatal(err)
 	}
-	subs = append(subs, c, d)
+	d2, err := client.RPC().SubscribeFilterLogs(context.Background(), ethereum.FilterQuery{
+		Topics: [][]common.Hash{{common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"), common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000")}},
+	}, logchan)
+	if err != nil {
+		log.Fatal(err)
+	}
+	subs = append(subs, c, d, d2)
 	return subs
 }
 func Subscribe(poolinit *Caller) bool {
@@ -85,7 +91,6 @@ func Subscribe(poolinit *Caller) bool {
 				ercres, err := newerc.GetTokenDetail()
 				if err != nil {
 					log.Fatal(err)
-
 				}
 				msg := "*🔮 MERLIN NEW CREATE POOL 🔮*\n\n" +
 					"*Token Name:* " + utils.EscapeMarkdownV2(ercres.Name) + "\n" +
@@ -100,14 +105,13 @@ func Subscribe(poolinit *Caller) bool {
 					"[Token Address](https://scan.merlinchain.io/token/" + resultdecode.TokenX.Hex() + ")  " +
 					"[Pool Address](https://scan.merlinchain.io/address/" + pooladdress.Hex() + ")"
 				fmt.Println("TokenAddress: ", resultdecode.TokenX.String(), "Name: ", ercres.Name, "Symbol: ", ercres.Symbol, "Owner: ", ercres.Owner.String(), "PoolAddress: ", pooladdress.String(), "Fee: ", resultdecode.Fee.Int64())
-				InsertTknLog(resultdecode.TokenX.String(), ercres.Name, ercres.Symbol, ercres.Owner.String(), pooladdress.String(), resultdecode.Fee.Int64(), 0)
 				SendLog(msg, "@merlinnewpool")
-			} else {
+			} else if vLog.Topics[0].Hex() == "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0" || vLog.Topics[0].Hex() == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" {
 				trx, err := client.RPC().TransactionReceipt(context.Background(), vLog.TxHash)
 				if err != nil {
 					log.Fatal(err)
-
 				}
+
 				if trx.ContractAddress.String() != "0x0000000000000000000000000000000000000000" {
 					log.Println("Found New Token", vLog.TxHash.String(), "Token Address: ", common.HexToAddress(trx.ContractAddress.String()).String())
 					newerc, err := InitERC(trx.ContractAddress)
@@ -129,6 +133,9 @@ func Subscribe(poolinit *Caller) bool {
 								"[Owner](https://scan.merlinchain.io/address/" + ercres.Owner.Hex() + ")  " +
 								"[TX HASH](https://scan.merlinchain.io/tx/" + vLog.TxHash.Hex() + ")  "
 							fmt.Println("TokenAddress: ", trx.ContractAddress.String(), "Name: ", ercres.Name, "Symbol: ", ercres.Symbol, "Owner: ", ercres.Owner.String())
+							InsertNewTkn(trx.ContractAddress.String(), ercres.Name, ercres.Symbol, ercres.Owner.String())
+							// InsertTknLog(resultdecode.TokenX.String(), ercres.Name, ercres.Symbol, ercres.Owner.String(), pooladdress.String(), resultdecode.Fee.Int64(), 0)
+
 							SendLog(msg, "@merlinnewtoken")
 						}
 					}

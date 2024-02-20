@@ -12,6 +12,13 @@ type LogToken struct {
 	Owner            string `json:"owner" bson:"owner"`
 	PoolAddress      string `json:"poolAddress" bson:"poolAddress"`
 }
+type NewToken struct {
+	mgm.DefaultModel `bson:",inline"`
+	TokenAddress     string `json:"tokenAddress" bson:"tokenAddress"`
+	Name             string `json:"name" bson:"name"`
+	Symbol           string `json:"symbol" bson:"symbol"`
+	Owner            string `json:"owner" bson:"owner"`
+}
 
 func NewModelLogTkn(tknAddress, name, symbol, Owner, PoolAddress string, Fee, Poolid int64) *LogToken {
 	return &LogToken{
@@ -22,5 +29,14 @@ func NewModelLogTkn(tknAddress, name, symbol, Owner, PoolAddress string, Fee, Po
 		PoolIds:      Poolid,
 		Owner:        Owner,
 		PoolAddress:  PoolAddress,
+	}
+}
+
+func NewModelNewToken(tknAddress, name, symbol, Owner string) *LogToken {
+	return &LogToken{
+		TokenAddress: tknAddress,
+		Name:         name,
+		Symbol:       symbol,
+		Owner:        Owner,
 	}
 }
