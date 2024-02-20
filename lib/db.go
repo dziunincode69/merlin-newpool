@@ -10,8 +10,8 @@ import (
 )
 
 func CheckTKNInserted(contractAddress common.Address) bool {
-	var results []*models.LogToken
-	err := mgm.Coll(&models.LogToken{}).SimpleFind(&results, bson.M{"tokenAddress": contractAddress.Hex()})
+	var results []*models.NewToken
+	err := mgm.Coll(&models.NewToken{}).SimpleFind(&results, bson.M{"tokenAddress": contractAddress.Hex()})
 	if err != nil {
 		log.Fatal(err) // Atau handle error sesuai kebutuhan
 	}

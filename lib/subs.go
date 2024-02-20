@@ -111,32 +111,32 @@ func Subscribe(poolinit *Caller) bool {
 				if err != nil {
 					log.Fatal(err)
 				}
-
-				if trx.ContractAddress.String() != "0x0000000000000000000000000000000000000000" {
-					log.Println("Found New Token", vLog.TxHash.String(), "Token Address: ", common.HexToAddress(trx.ContractAddress.String()).String())
-					newerc, err := InitERC(trx.ContractAddress)
-					if err != nil {
-						triggerchan <- false
-					} else {
-						ercres, err := newerc.GetTokenDetail()
+				if CheckTKNInserted(trx.ContractAddress) {
+					if trx.ContractAddress.String() != "0x0000000000000000000000000000000000000000" {
+						log.Println("Found New Token", vLog.TxHash.String(), "Token Address: ", common.HexToAddress(trx.ContractAddress.String()).String())
+						newerc, err := InitERC(trx.ContractAddress)
 						if err != nil {
 							triggerchan <- false
 						} else {
-							msg := "*🔮 MERLIN NEW TOKEN CREATED 🔮*\n\n" +
-								"*Token Name:* " + utils.EscapeMarkdownV2(ercres.Name) + "\n" +
-								"*Token Symbol:* " + utils.EscapeMarkdownV2(ercres.Symbol) + "\n" +
-								"*Token Address:* `" + utils.EscapeMarkdownV2(trx.ContractAddress.Hex()) + "`\n" +
-								"*Total Supply:* " + utils.EscapeMarkdownV2(ercres.TotalSupply.String()) + "\n" +
-								"*Decimals:* " + utils.EscapeMarkdownV2(strconv.Itoa(int(ercres.Dec))) + "\n" +
-								"*Owner:* `" + utils.EscapeMarkdownV2(ercres.Owner.Hex()) + "`\n\n" +
-								"[Token Address](https://scan.merlinchain.io/token/" + trx.ContractAddress.Hex() + ")  " +
-								"[Owner](https://scan.merlinchain.io/address/" + ercres.Owner.Hex() + ")  " +
-								"[TX HASH](https://scan.merlinchain.io/tx/" + vLog.TxHash.Hex() + ")  "
-							fmt.Println("TokenAddress: ", trx.ContractAddress.String(), "Name: ", ercres.Name, "Symbol: ", ercres.Symbol, "Owner: ", ercres.Owner.String())
-							InsertNewTkn(trx.ContractAddress.String(), ercres.Name, ercres.Symbol, ercres.Owner.String())
-							// InsertTknLog(resultdecode.TokenX.String(), ercres.Name, ercres.Symbol, ercres.Owner.String(), pooladdress.String(), resultdecode.Fee.Int64(), 0)
-
-							SendLog(msg, "@merlinnewtoken")
+							ercres, err := newerc.GetTokenDetail()
+							if err != nil {
+								triggerchan <- false
+							} else {
+								msg := "*🔮 MERLIN NEW TOKEN CREATED 🔮*\n\n" +
+									"*Token Name:* " + utils.EscapeMarkdownV2(ercres.Name) + "\n" +
+									"*Token Symbol:* " + utils.EscapeMarkdownV2(ercres.Symbol) + "\n" +
+									"*Token Address:* `" + utils.EscapeMarkdownV2(trx.ContractAddress.Hex()) + "`\n" +
+									"*Total Supply:* " + utils.EscapeMarkdownV2(ercres.TotalSupply.String()) + "\n" +
+									"*Decimals:* " + utils.EscapeMarkdownV2(strconv.Itoa(int(ercres.Dec))) + "\n" +
+									"*Owner:* `" + utils.EscapeMarkdownV2(ercres.Owner.Hex()) + "`\n\n" +
+									"[Token Address](https://scan.merlinchain.io/token/" + trx.ContractAddress.Hex() + ")  " +
+									"[Owner](https://scan.merlinchain.io/address/" + ercres.Owner.Hex() + ")  " +
+									"[TX HASH](https://scan.merlinchain.io/tx/" + vLog.TxHash.Hex() + ")  "
+								fmt.Println("TokenAddress: ", trx.ContractAddress.String(), "Name: ", ercres.Name, "Symbol: ", ercres.Symbol, "Owner: ", ercres.Owner.String())
+								InsertNewTkn(trx.ContractAddress.Hex(), ercres.Name, ercres.Symbol, ercres.Owner.String())
+								// InsertTknLog(resultdecode.TokenX.String(), ercres.Name, ercres.Symbol, ercres.Owner.String(), pooladdress.String(), resultdecode.Fee.Int64(), 0)
+								SendLog(msg, "@merlinnewtoken")
+							}
 						}
 					}
 				}
